@@ -100,20 +100,20 @@ BOOL CMFCApplication5App::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 	init();
-	login ldlg;
-	if (!g_isLogin)
-	{
-		ldlg.DoModal();
-	}
-	save();
-	if (!g_isLogin)
-	{
-		if (pShellManager != nullptr)
-		{
-			delete pShellManager;
-		}
-		return false;
-	}
+	//login ldlg;
+	//if (!g_isLogin)
+	//{
+	//	ldlg.DoModal();
+	//}
+	//save();
+	//if (!g_isLogin)
+	//{
+	//	if (pShellManager != nullptr)
+	//	{
+	//		delete pShellManager;
+	//	}
+	//	return false;
+	//}
 
 	CMFCApplication5Dlg dlg;
 	m_pMainWnd = &dlg;
