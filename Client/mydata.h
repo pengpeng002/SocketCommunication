@@ -1,6 +1,7 @@
 #pragma once
 #include "MFCApplication5.h"
 #include <string>
+#include <thread>
 #include <vector>
 using namespace std;
 extern char name[20], pass[30];
@@ -41,7 +42,7 @@ void g_download(char* str);
 void g_rename();
 void g_copy();
 void g_cut();
-void g_paste();
+void g_paste(const CString path_old, const CString path_new, const int option);
 void g_refresh(CString path = "null");
 void g_open();
 void g_info();
@@ -50,4 +51,4 @@ void bootRun(bool cancel=false);
 bool isFile(const char* str);
 long long s2i(const char* str);
 int CALLBACK CompareFunc(LPARAM   lParam1, LPARAM   lParam2, LPARAM   lParamSort);
-CString findFitName(const char* str);
+CString findFitName(const char* str, const vector<CString>* vec = NULL);

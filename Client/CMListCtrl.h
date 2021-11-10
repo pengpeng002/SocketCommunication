@@ -44,5 +44,8 @@ public:
     afx_msg void OnSortSize();
     afx_msg void OnSortAsc();
     afx_msg void OnSortDec();
+    void pasteThread(const vector<CString>vec, const vector<CString>selectText, const CString oldPath, const CString newPath, const int option);
+protected:
+    afx_msg LRESULT OnGiveSelf(WPARAM wParam, LPARAM lParam);
 };
 

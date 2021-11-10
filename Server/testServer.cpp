@@ -249,7 +249,7 @@ void getThread(SOCKET Client)//接受客户端指令的线程
 				delete[]newName;
 				break;
 			}
-			
+			//需要修改为多线程以实现在复制时响应其他操作 
 			case PASTE: {//粘贴复制或剪切的文件   仅支持单个文件或单个文件夹 
 				int len_old, len_new, option;
 				recv(Client, (char*)&len_old, 4, 0);//源文件所在路径长度 
@@ -290,6 +290,8 @@ void getThread(SOCKET Client)//接受客户端指令的线程
 					cmd="move /Y "+so+" "+sn;
 					system(cmd.c_str());
 				}
+				int temp=0;
+				send(Client, (char*)&temp, 4, 0);
 				break;
 			}
 		}

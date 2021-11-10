@@ -4,6 +4,10 @@
 #include "afxdialogex.h"
 #include "direct.h"
 #include <stack>
+#define GIVE_SELF 4013
+enum {
+	PASTE_OK, REFRESH
+};
 
 CMListCtrl::CMListCtrl()
 {
@@ -37,6 +41,7 @@ BEGIN_MESSAGE_MAP(CMListCtrl, CListCtrl)
 	ON_COMMAND(ID_32788, &CMListCtrl::OnSortSize)
 	ON_COMMAND(ID_32789, &CMListCtrl::OnSortAsc)
 	ON_COMMAND(ID_32790, &CMListCtrl::OnSortDec)
+	ON_MESSAGE(GIVE_SELF, &CMListCtrl::OnGiveSelf)
 END_MESSAGE_MAP()
 
 
@@ -165,7 +170,7 @@ void CMListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			SetCheck(i, GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED);
 		}
-
+		printf("get item!\n");
 		int num = 0;
 		POSITION pos = GetFirstSelectedItemPosition();
 		while (pos)
@@ -174,7 +179,7 @@ void CMListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
 			if (num > 1) break;
 			GetNextSelectedItem(pos);
 		}
-
+		printf("get num!\n");
 		CMenu menu;
 		CMenu* popup;
 		POINT pt = { 0 };
@@ -187,7 +192,8 @@ void CMListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
 			{
 				popup->RemoveMenu(ID_PASTE, MF_BYCOMMAND);
 			}
-			CMenu* sortm = popup->GetSubMenu(5);
+			printf("removed issort %d, idcmp %d\n", m_idSort, m_idCmp);
+			CMenu* sortm = popup->GetSubMenu(5+(option != -1));
 			sortm->CheckMenuRadioItem(ID_32785, ID_32788, m_idSort, MF_BYCOMMAND);
 			sortm->CheckMenuRadioItem(ID_32789, ID_32790, m_idCmp, MF_BYCOMMAND);
 		}
@@ -209,6 +215,7 @@ void CMListCtrl::OnNMRClick(NMHDR* pNMHDR, LRESULT* pResult)
 				popup->RemoveMenu(ID_RENAME, MF_BYCOMMAND);
 			}
 		}
+		printf("0000000000000000\n");
 		popup->TrackPopupMenu(0, pt.x, pt.y, this);
 		printf("selected num = %d\n", num);
 	}
@@ -532,6 +539,24 @@ void CMListCtrl::OnCut()
 	oldPath = path;
 }
 
+void CMListCtrl::pasteThread(const vector<CString>vec, const vector<CString>selectText, const CString oldPath, const CString newPath, const int option)
+{
+	for (auto i : selectText)
+	{
+		CString oldName = i;
+		CString newName = findFitName(oldName.GetBuffer(), &vec);
+		g_paste(oldPath + oldName, newPath + newName, option);
+		printf("now paste file %s\n", i.GetBuffer());
+	}
+	PostMessageA(GIVE_SELF, PASTE_OK);
+	//showTipMessage("文件粘贴成功");
+	if (path == newPath)
+	{
+		PostMessageA(GIVE_SELF, REFRESH);
+		//g_refresh();
+		//g_showList(this);
+	}
+}
 
 void CMListCtrl::OnPaste()
 {
@@ -557,15 +582,19 @@ void CMListCtrl::OnPaste()
 			}
 		}
 	}
-	for (auto i : selectText)
-	{
-		oldName = i;
-		updateVec(this);
-		g_paste();
-	}
+	updateVec(this);
+	//pasteThread(vec, selectText, oldPath, path, option);
+	std::thread th(&CMListCtrl::pasteThread, this, vec, selectText, oldPath, path, option);
+	th.join();
+	
+	//for (auto i : selectText)
+	//{
+	//	oldName = i;
+	//	
+	//	g_paste();
+	//}
 	if (option == 0) option = -1;
-	g_refresh();
-	g_showList(this);
+	
 }
 
 
@@ -648,7 +677,6 @@ void CMListCtrl::OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-
 void CMListCtrl::OnEnKillfocusShow()
 {
 	m_edit->GetWindowTextA(newName);
@@ -658,7 +686,6 @@ void CMListCtrl::OnEnKillfocusShow()
 	m_edit = NULL;
 	g_rename();
 }
-
 
 void CMListCtrl::showTipMessage(const CString& s)
 {
@@ -678,7 +705,6 @@ void CMListCtrl::OnSortName()
 	SortItems(CompareFunc, (DWORD_PTR)this);
 }
 
-
 void CMListCtrl::OnSortDate()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -686,7 +712,6 @@ void CMListCtrl::OnSortDate()
 	sortColumn = 2;
 	SortItems(CompareFunc, (DWORD_PTR)this);
 }
-
 
 void CMListCtrl::OnSortType()
 {
@@ -696,7 +721,6 @@ void CMListCtrl::OnSortType()
 	SortItems(CompareFunc, (DWORD_PTR)this);
 }
 
-
 void CMListCtrl::OnSortSize()
 {
 	// TODO: 在此添加命令处理程序代码
@@ -704,7 +728,6 @@ void CMListCtrl::OnSortSize()
 	sortColumn = 3;
 	SortItems(CompareFunc, (DWORD_PTR)this);
 }
-
 
 void CMListCtrl::OnSortAsc()
 {
@@ -714,11 +737,25 @@ void CMListCtrl::OnSortAsc()
 	SortItems(CompareFunc, (DWORD_PTR)this);
 }
 
-
 void CMListCtrl::OnSortDec()
 {
 	// TODO: 在此添加命令处理程序代码
 	m_idCmp = ID_32790;
 	isDesc = 1;
 	SortItems(CompareFunc, (DWORD_PTR)this);
+}
+
+
+afx_msg LRESULT CMListCtrl::OnGiveSelf(WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam)
+	{
+	case PASTE_OK: {
+		showTipMessage("文件粘贴成功");
+	}
+	case REFRESH: {
+		OnRefresh();
+	}
+	}
+	return 0;
 }

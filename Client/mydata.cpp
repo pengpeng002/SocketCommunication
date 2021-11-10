@@ -22,7 +22,7 @@ char defaultPath[MAX_PATH];
 bool g_autoRun=0, g_useBubble=0, g_useDefaultPath=1;
 ShowInfo* showInfo;
 vector<CString> vec, selectText;
-CString findFitName(const char* str);
+//CString findFitName(const char* str);
 enum {
 	EXIT, LOGIN, UPLOAD, DOWNLOAD, REFRESH, DELETED, NEWDIR, RENAME, PASTE
 };
@@ -330,22 +330,23 @@ void g_cut()
 
 }
 
-void g_paste()
+void g_paste(const CString path_old, const CString path_new, const int option)
 {
-	if (oldPath == path && !(option & 1)) return;
-	newName = findFitName(oldName.GetBuffer());
-	CString path_old = oldPath + oldName;
-	CString path_new = path + newName;
+	//if (oldPath == path && !(option & 1)) return;
+	//newName = findFitName(oldName.GetBuffer());
+	//CString path_old = oldPath + oldName;
+	//CString path_new = path + newName;
 	int len_old = path_old.GetLength(), len_new = path_new.GetLength();
-	printf("oldpath=%s, newpath = %s\n", path_old.GetBuffer(), path_new.GetBuffer());
+	printf("oldpath=%s, newpath = %s\n", path_old.GetString(), path_new.GetString());
 	int opt = PASTE;
 	//return;
 	send(Client, (char*)&opt, 4, 0);
 	send(Client, (char*)&len_old, 4, 0);
-	send(Client, path_old.GetBuffer(), len_old, 0);
+	send(Client, path_old.GetString(), len_old, 0);
 	send(Client, (char*)&len_new, 4, 0);
-	send(Client, path_new.GetBuffer(), len_new, 0);
+	send(Client, path_new.GetString(), len_new, 0);
 	send(Client, (char*)&option, 4, 0);
+	recv(Client, (char*)&opt, 4, 0);
 }
 
 CString intAddComma(long long x)
@@ -409,9 +410,9 @@ void g_info()
 
 }
 
-bool findHave(CString& str)
+bool findHave(CString& str, const vector<CString>* vec)
 {
-	for (auto i : vec)
+	for (auto i : *vec)
 	{
 		if (i == str)
 		{
@@ -421,8 +422,9 @@ bool findHave(CString& str)
 	return 0;
 }
 
-CString findFitName(const char* str)
+CString findFitName(const char* str, const vector<CString>*vec/*= NULL*/)
 {
+	if (vec == NULL) vec = &::vec;
 	int len = strlen(str);
 	int pos = 0;
 	for (int i = len - 1; i > 0; i--)
@@ -448,14 +450,14 @@ CString findFitName(const char* str)
 		ss[len] = 0;
 		ext = "";
 	}
-	if (findHave(name))
+	if (findHave(name, vec))
 	{
 		int add = 1;
 		while (1)
 		{
 			name.Format("%s-%d%s", ss, add, ext.GetBuffer());
 			add++;
-			if (!findHave(name)) break;
+			if (!findHave(name, vec)) break;
 		}
 	}
 	delete[]ss;
