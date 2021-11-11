@@ -541,11 +541,21 @@ void CMListCtrl::OnCut()
 
 void CMListCtrl::pasteThread(const vector<CString>vec, const vector<CString>selectText, const CString oldPath, const CString newPath, const int option)
 {
+	SOCKET Client = socket(AF_INET, SOCK_STREAM, 0);//TCP通信
+	sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(4011);
+	addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.252");
+	if (connect(Client, (sockaddr*)&addr, sizeof(addr)))
+	{
+		printf("connect error, error code: %d\n", WSAGetLastError());
+		return;
+	}
 	for (auto i : selectText)
 	{
 		CString oldName = i;
 		CString newName = findFitName(oldName.GetBuffer(), &vec);
-		g_paste(oldPath + oldName, newPath + newName, option);
+		g_paste(Client, oldPath + oldName, newPath + newName, option);
 		printf("now paste file %s\n", i.GetBuffer());
 	}
 	PostMessageA(GIVE_SELF, PASTE_OK);
@@ -556,6 +566,8 @@ void CMListCtrl::pasteThread(const vector<CString>vec, const vector<CString>sele
 		//g_refresh();
 		//g_showList(this);
 	}
+	int opt = 0;
+	send(Client, (char*)&opt, 4, 0);
 }
 
 void CMListCtrl::OnPaste()
@@ -585,7 +597,7 @@ void CMListCtrl::OnPaste()
 	updateVec(this);
 	//pasteThread(vec, selectText, oldPath, path, option);
 	std::thread th(&CMListCtrl::pasteThread, this, vec, selectText, oldPath, path, option);
-	th.join();
+	th.detach();
 	
 	//for (auto i : selectText)
 	//{
@@ -601,6 +613,7 @@ void CMListCtrl::OnPaste()
 void CMListCtrl::OnRefresh()
 {
 	// TODO: 在此添加命令处理程序代码
+	printf("now is to refresh!\n");
 	g_refresh();
 	g_showList(this);
 	GetParent()->PostMessageA(LISTCLICK);

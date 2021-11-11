@@ -42,7 +42,7 @@ void g_download(char* str);
 void g_rename();
 void g_copy();
 void g_cut();
-void g_paste(const CString path_old, const CString path_new, const int option);
+void g_paste(const SOCKET &Client, const CString path_old, const CString path_new, const int option);
 void g_refresh(CString path = "null");
 void g_open();
 void g_info();

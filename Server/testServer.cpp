@@ -37,6 +37,13 @@ int getPathName(const char* path)//¸ù¾İÂ·¾¶»ñÈ¡ÎÄ¼şÃû ·µ»Ø×îºóÒ»¸ö\\ ÔÚ×Ö·û´®ÖĞµ
 	}
 	return st;
 }
+void pasteThread(string cmd, SOCKET Client)
+{
+	system(cmd.c_str());
+	int ok=0;
+	printf("is ok\n");
+	//send(Client, (char*)&ok, 4, 0);
+}
 void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì 
 {
 	const int bufferSize = 1024*1024*20;
@@ -282,12 +289,14 @@ void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì
 					{
 						cmd="xcopy /E /Y /I "+so+" "+sn;
 					}
+//					thread th(pasteThread, cmd, Client); th.detach();
 					system(cmd.c_str());
 				}
 				else//cut
 				{
 					string cmd;
 					cmd="move /Y "+so+" "+sn;
+//					thread th(pasteThread, cmd, Client); th.detach();
 					system(cmd.c_str());
 				}
 				int temp=0;

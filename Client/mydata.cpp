@@ -330,7 +330,7 @@ void g_cut()
 
 }
 
-void g_paste(const CString path_old, const CString path_new, const int option)
+void g_paste(const SOCKET &Client, const CString path_old, const CString path_new, const int option)
 {
 	//if (oldPath == path && !(option & 1)) return;
 	//newName = findFitName(oldName.GetBuffer());

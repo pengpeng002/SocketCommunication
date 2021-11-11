@@ -146,7 +146,7 @@ afx_msg LRESULT CMFCApplication5Dlg::OnListClick(WPARAM wParam, LPARAM lParam)
 		if (num > 1) break;
 		m_fileList.GetNextSelectedItem(pos);
 	}
-
+	printf("get a click!\n");
 	CMenu* menu = GetMenu();
 	if (num == 0)
 	{
@@ -310,6 +310,7 @@ static int findNext(int now, int add=1)
 void CMFCApplication5Dlg::OnBnClickedButton1()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	printf("go to bak!\n");
 	goforward = 1;
 	int next = findNext(path.GetLength()-1, -1);
 	path = lastPath.Left(next+1);
