@@ -343,7 +343,6 @@ void CMListCtrl::OnUpload()
 	if (isFile(buf))
 	{
 		g_upload(buf+len+1);
-		//printf("send fksjdlfkjslkjflkasjflksjsalkjsdl\n");
 	}
 	else
 	{
@@ -436,7 +435,6 @@ void CMListCtrl::OnDownload()
 			{
 				pa pp = sta.top();
 				sta.pop();
-				//printf("sta.top.first = %s\n", pp.first.GetBuffer());
 				if (pp.second == 1)
 				{
 					g_refresh(path + pp.first + "\\");
@@ -445,15 +443,12 @@ void CMListCtrl::OnDownload()
 						sta.push(make_pair(pp.first+"\\"+showInfo[i].fileName, showInfo[i].isFolder == "文件夹"));
 					}
 					if (pp.first == str) continue;
-					//else printf("%s %s\n", pp.first.GetBuffer(), saveName.GetBuffer());
 					CString out = g_tempSavePath + CString(pp.first.GetBuffer() + str.GetLength() + 1);
 					printf("out=%s\n", out.GetBuffer());
-					//printf("path=%s, first=%s, savepath = %s\n", path.GetBuffer(), pp.first.GetBuffer(), g_tempSavePath.GetBuffer());
 					_mkdir(out.GetBuffer());
 				}
 				else
 				{
-					//printf("download path = %s\n", pp.first.GetBuffer() + str.GetLength() + 1);
 					CString temp = path;
 					path += str + "\\";
 					g_download(pp.first.GetBuffer() + str.GetLength() + 1);
@@ -559,12 +554,9 @@ void CMListCtrl::pasteThread(const vector<CString>vec, const vector<CString>sele
 		printf("now paste file %s\n", i.GetBuffer());
 	}
 	PostMessageA(GIVE_SELF, PASTE_OK);
-	//showTipMessage("文件粘贴成功");
 	if (path == newPath)
 	{
 		PostMessageA(GIVE_SELF, REFRESH);
-		//g_refresh();
-		//g_showList(this);
 	}
 	int opt = 0;
 	send(Client, (char*)&opt, 4, 0);
@@ -595,16 +587,8 @@ void CMListCtrl::OnPaste()
 		}
 	}
 	updateVec(this);
-	//pasteThread(vec, selectText, oldPath, path, option);
 	std::thread th(&CMListCtrl::pasteThread, this, vec, selectText, oldPath, path, option);
 	th.detach();
-	
-	//for (auto i : selectText)
-	//{
-	//	oldName = i;
-	//	
-	//	g_paste();
-	//}
 	if (option == 0) option = -1;
 	
 }
@@ -613,7 +597,6 @@ void CMListCtrl::OnPaste()
 void CMListCtrl::OnRefresh()
 {
 	// TODO: 在此添加命令处理程序代码
-	printf("now is to refresh!\n");
 	g_refresh();
 	g_showList(this);
 	GetParent()->PostMessageA(LISTCLICK);

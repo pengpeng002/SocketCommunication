@@ -37,13 +37,7 @@ int getPathName(const char* path)//¸ù¾İÂ·¾¶»ñÈ¡ÎÄ¼şÃû ·µ»Ø×îºóÒ»¸ö\\ ÔÚ×Ö·û´®ÖĞµ
 	}
 	return st;
 }
-void pasteThread(string cmd, SOCKET Client)
-{
-	system(cmd.c_str());
-	int ok=0;
-	printf("is ok\n");
-	//send(Client, (char*)&ok, 4, 0);
-}
+
 void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì 
 {
 	const int bufferSize = 1024*1024*20;
@@ -256,7 +250,7 @@ void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì
 				delete[]newName;
 				break;
 			}
-			//ĞèÒªĞŞ¸ÄÎª¶àÏß³ÌÒÔÊµÏÖÔÚ¸´ÖÆÊ±ÏìÓ¦ÆäËû²Ù×÷ 
+			
 			case PASTE: {//Õ³Ìù¸´ÖÆ»ò¼ôÇĞµÄÎÄ¼ş   ½öÖ§³Öµ¥¸öÎÄ¼ş»òµ¥¸öÎÄ¼ş¼Ğ 
 				int len_old, len_new, option;
 				recv(Client, (char*)&len_old, 4, 0);//Ô´ÎÄ¼şËùÔÚÂ·¾¶³¤¶È 
@@ -270,7 +264,8 @@ void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì
 				name_new[len_new]=0;
 				
 				recv(Client, (char*)&option, 4, 0);
-				string sn = string(showFilePath)+string(name_new+1);//Ä¿±ê¾ø¶ÔÂ·¾¶ 
+				string ss = string(showFilePath)+string(name_new+1);
+				string sn = ss + "-pasting";//Ä¿±ê¾ø¶ÔÂ·¾¶ 
 				string so = string(showFilePath)+string(name_old+1);//Ô´¾ø¶ÔÂ·¾¶ 
 //				printf("sn=%s, so=%s\n", sn.c_str(), so.c_str());
 				delete[]name_old;//ÊÍ·Å¿Õ¼ä 
@@ -299,6 +294,7 @@ void getThread(SOCKET Client)//½ÓÊÜ¿Í»§¶ËÖ¸ÁîµÄÏß³Ì
 //					thread th(pasteThread, cmd, Client); th.detach();
 					system(cmd.c_str());
 				}
+				rename(sn.c_str(), ss.c_str());
 				int temp=0;
 				send(Client, (char*)&temp, 4, 0);
 				break;
