@@ -51,4 +51,5 @@ void bootRun(bool cancel=false);
 bool isFile(const char* str);
 long long s2i(const char* str);
 int CALLBACK CompareFunc(LPARAM   lParam1, LPARAM   lParam2, LPARAM   lParamSort);
+void down(const CString name, const CString savePath, const SOCKET& Client);
 CString findFitName(const char* str, const vector<CString>* vec = NULL);

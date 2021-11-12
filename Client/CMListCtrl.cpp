@@ -4,6 +4,7 @@
 #include "afxdialogex.h"
 #include "direct.h"
 #include <stack>
+#include <io.h>
 #define GIVE_SELF 4013
 enum {
 	PASTE_OK, REFRESH
@@ -365,12 +366,38 @@ void CMListCtrl::OnNewDir()
 	SetSelectionMark(count-1);
 	OnRename();
 }
-
-
+void download(const vector<CString>saved, const vector<CString>local)
+{
+	SOCKET Client = socket(AF_INET, SOCK_STREAM, 0);//TCP通信
+	sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(4011);
+	addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.252");
+	if (connect(Client, (sockaddr*)&addr, sizeof(addr)))
+	{
+		printf("connect error, error code: %d\n", WSAGetLastError());
+		return;
+	}
+	int size = saved.size();
+	for (int i = 0; i < size; i++)
+	{
+		down(saved[i].GetString(), local[i].GetString(), Client);
+	}
+	printf("download complete!\n");
+}
+//void down(const CString name, const CString savePath, const SOCKET& Client);
 void CMListCtrl::OnDownload()
 {
 	// TODO: 在此添加命令处理程序代码
 	g_tempSavePath = g_savePath;
+	if (_access(g_savePath.GetBuffer(), 0) == -1)
+	{
+		if (_mkdir(g_savePath.GetBuffer()) == -1)
+		{
+			MessageBox("下载路径创建失败，请更改或手动创建下载路径");
+			return;
+		}
+	}
 	vector<int> vei;
 	POSITION pos = GetFirstSelectedItemPosition();//查找所有选中
 	while (pos)
@@ -379,11 +406,11 @@ void CMListCtrl::OnDownload()
 		vei.push_back(ind);
 	}
 
-	if (vei.size() > 1 || GetItemText(GetSelectionMark(), 1) == "文件夹")//判断是否允许下载
-	{
-		MessageBox("抱歉，暂时只支持单个文件下载");
-		return;
-	}
+	//if (vei.size() > 1 || GetItemText(GetSelectionMark(), 1) == "文件夹")//判断是否允许下载
+	//{
+	//	MessageBox("抱歉，暂时只支持单个文件下载");
+	//	return;
+	//}
 
 	if (!g_useDefaultPath)//交由用户选择下载路径
 	{
@@ -408,19 +435,22 @@ void CMListCtrl::OnDownload()
 			vec.push_back(CString(line));
 		}
 	}
-
+	vector<CString> saved;
+	vector<CString> local;
 	for (auto i : vei)
 	{
 		CString str = GetItemText(i, 0);
 		bool isFolder = GetItemText(i, 1) == "文件夹";
 		if (!isFolder)
 		{
-			char* cstr = new char[str.GetLength() + 2];
-			sprintf(cstr, "%s", str.GetBuffer());
-			cstr[str.GetLength()] = 0;
-			printf("cstr=%s\n", cstr);
-			g_download(str.GetBuffer());
-			delete[]cstr;
+			//char* cstr = new char[str.GetLength() + 2];
+			//sprintf(cstr, "%s", str.GetBuffer());
+			//cstr[str.GetLength()] = 0;
+			//printf("cstr=%s\n", cstr);
+			//g_download(str.GetBuffer());
+			saved.push_back(path+str);
+			local.push_back(g_tempSavePath+findFitName(str));
+			//delete[]cstr;
 		}
 		else
 		{
@@ -451,13 +481,25 @@ void CMListCtrl::OnDownload()
 				{
 					CString temp = path;
 					path += str + "\\";
-					g_download(pp.first.GetBuffer() + str.GetLength() + 1);
+					char* ss = pp.first.GetBuffer() + str.GetLength() + 1;
+					//g_download(ss);
+					local.push_back(g_tempSavePath+ss);
+					saved.push_back(path+ss);
 					path = temp;
 				}
 			}
 			g_tempSavePath = temp;
 		}
 	}
+	int size = local.size();
+	for (int i = 0; i < size; i++)
+	{
+		printf("remote addr: %s,  local addr: %s\n", saved[i].GetBuffer(), local[i].GetBuffer());
+	}
+
+	thread th(download, saved, local);
+	th.detach();
+	//download(saved, local);
 	
 	
 }

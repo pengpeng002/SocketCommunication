@@ -261,16 +261,40 @@ void g_delete(CString &str)
 
 }
 
+void down(const CString name, const CString savePath, const SOCKET &Client)
+{
+	int opt = DOWNLOAD;
+	int nameLen = name.GetLength();
+	send(Client, (char*)&opt, 4, 0);//发送下载命令
+	send(Client, (char*)&nameLen, 4, 0);//发送路径长度
+	send(Client, name.GetString(), nameLen, 0);//发送路径
+	long long fileLen = 0;
+	recv(Client, (char*)&fileLen, 8, 0);//收到文件长度
+	if (fileLen > INT_MAX || fileLen < 0)
+	{
+		fileLen = 0;
+		MessageBox(0, "文件最大限制为2GB", "error", 0);
+		//return;
+	}
+	printf("nameLen=%d, name=%s, fileLen=%lld, savePath=%s\n", nameLen, name.GetString(), fileLen, savePath.GetString());
+	FILE* fp = fopen(savePath.GetString(), "wb");//打开文件
+	long long saveLen = 0;
+	clock_t st = clock();
+	while (saveLen < fileLen)
+	{
+		int readLen = recv(Client, buffer, min(bufferSize, fileLen - saveLen), 0);
+		fwrite(buffer, readLen, 1, fp);
+		saveLen += readLen;
+		printf("\r%02.2lf %lld / %lld", saveLen * 100.0f / fileLen, saveLen, fileLen);
+	}
+	printf("\ndownload use time: %d\n", clock() - st);
+	printf("\nsave end\n");
+	fclose(fp);
+}
+
 void g_download(char* fi)
 {
-	if (_access(g_savePath.GetBuffer(), 0) == -1)
-	{
-		if (_mkdir(g_savePath.GetBuffer()) == -1)
-		{
-			MessageBox(0, "下载路径创建失败，请更改或手动创建下载路径", "error", 0);
-			return;
-		}
-	}
+	
 	int opt = DOWNLOAD;
 	CString name = path + fi;
 	int nameLen = name.GetLength();
