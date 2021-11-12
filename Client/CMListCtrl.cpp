@@ -366,7 +366,9 @@ void CMListCtrl::OnNewDir()
 	SetSelectionMark(count-1);
 	OnRename();
 }
-void download(const vector<CString>saved, const vector<CString>local)
+
+
+void downloadThread(const vector<CString>saved, const vector<CString>local)
 {
 	SOCKET Client = socket(AF_INET, SOCK_STREAM, 0);//TCP通信
 	sockaddr_in addr;
@@ -381,23 +383,16 @@ void download(const vector<CString>saved, const vector<CString>local)
 	int size = saved.size();
 	for (int i = 0; i < size; i++)
 	{
-		down(saved[i].GetString(), local[i].GetString(), Client);
+		g_download(saved[i].GetString(), local[i].GetString(), Client);
 	}
 	printf("download complete!\n");
 }
-//void down(const CString name, const CString savePath, const SOCKET& Client);
+
+
 void CMListCtrl::OnDownload()
 {
 	// TODO: 在此添加命令处理程序代码
-	g_tempSavePath = g_savePath;
-	if (_access(g_savePath.GetBuffer(), 0) == -1)
-	{
-		if (_mkdir(g_savePath.GetBuffer()) == -1)
-		{
-			MessageBox("下载路径创建失败，请更改或手动创建下载路径");
-			return;
-		}
-	}
+	
 	vector<int> vei;
 	POSITION pos = GetFirstSelectedItemPosition();//查找所有选中
 	while (pos)
@@ -406,11 +401,11 @@ void CMListCtrl::OnDownload()
 		vei.push_back(ind);
 	}
 
-	//if (vei.size() > 1 || GetItemText(GetSelectionMark(), 1) == "文件夹")//判断是否允许下载
-	//{
-	//	MessageBox("抱歉，暂时只支持单个文件下载");
-	//	return;
-	//}
+	if (vei.size() > 1 || GetItemText(GetSelectionMark(), 1) == "文件夹")//判断是否允许下载
+	{
+		MessageBox("抱歉，暂时只支持单个文件下载");
+		return;
+	}
 
 	if (!g_useDefaultPath)//交由用户选择下载路径
 	{
@@ -418,11 +413,20 @@ void CMListCtrl::OnDownload()
 		fpd.m_ofn.lpstrTitle = "请选择下载路径";
 		if (fpd.DoModal() == TRUE)
 		{
-			g_tempSavePath = fpd.GetFolderPath()+"\\";
+			g_savePath = fpd.GetFolderPath()+"\\";
 		}
 	}
 
-	string com = "dir " + string(g_tempSavePath.GetBuffer()) + " /b";
+	if (_access(g_savePath.GetBuffer(), 0) == -1)
+	{
+		if (_mkdir(g_savePath.GetBuffer()) == -1)
+		{
+			MessageBox("下载路径创建失败，请更改或手动创建下载路径");
+			return;
+		}
+	}
+
+	string com = "dir " + string(g_savePath.GetBuffer()) + " /b";
 	printf("command : %s\n", com.c_str());
 	FILE* fp = _popen(com.c_str(), "r");//以读的形式打开管道，获取dir命令执行结果 
 	char* line = new char[MAX_PATH + 5];//一行的长度，即文件名最大长度
@@ -443,21 +447,15 @@ void CMListCtrl::OnDownload()
 		bool isFolder = GetItemText(i, 1) == "文件夹";
 		if (!isFolder)
 		{
-			//char* cstr = new char[str.GetLength() + 2];
-			//sprintf(cstr, "%s", str.GetBuffer());
-			//cstr[str.GetLength()] = 0;
-			//printf("cstr=%s\n", cstr);
-			//g_download(str.GetBuffer());
 			saved.push_back(path+str);
-			local.push_back(g_tempSavePath+findFitName(str));
-			//delete[]cstr;
+			local.push_back(g_savePath +findFitName(str));
 		}
 		else
 		{
 			CString saveName = findFitName(str.GetBuffer());
-			_mkdir(CString(g_tempSavePath + saveName).GetBuffer());
-			CString temp = g_tempSavePath;
-			g_tempSavePath += saveName + "\\";
+			_mkdir(CString(g_savePath + saveName).GetBuffer());
+			CString temp = g_savePath;
+			g_savePath += saveName + "\\";
 			typedef pair<CString, bool> pa;
 			stack<pa> sta;
 			sta.push(make_pair(str, 1));
@@ -473,8 +471,8 @@ void CMListCtrl::OnDownload()
 						sta.push(make_pair(pp.first+"\\"+showInfo[i].fileName, showInfo[i].isFolder == "文件夹"));
 					}
 					if (pp.first == str) continue;
-					CString out = g_tempSavePath + CString(pp.first.GetBuffer() + str.GetLength() + 1);
-					printf("out=%s\n", out.GetBuffer());
+					CString out = g_savePath + CString(pp.first.GetBuffer() + str.GetLength() + 1);
+					//printf("out=%s\n", out.GetBuffer());
 					_mkdir(out.GetBuffer());
 				}
 				else
@@ -482,26 +480,21 @@ void CMListCtrl::OnDownload()
 					CString temp = path;
 					path += str + "\\";
 					char* ss = pp.first.GetBuffer() + str.GetLength() + 1;
-					//g_download(ss);
-					local.push_back(g_tempSavePath+ss);
+					local.push_back(g_savePath +ss);
 					saved.push_back(path+ss);
 					path = temp;
 				}
 			}
-			g_tempSavePath = temp;
+			g_savePath = temp;
 		}
 	}
-	int size = local.size();
-	for (int i = 0; i < size; i++)
-	{
-		printf("remote addr: %s,  local addr: %s\n", saved[i].GetBuffer(), local[i].GetBuffer());
-	}
-
-	thread th(download, saved, local);
+	//int size = local.size();
+	//for (int i = 0; i < size; i++)
+	//{
+	//	printf("remote addr: %s,  local addr: %s\n", saved[i].GetBuffer(), local[i].GetBuffer());
+	//}
+	thread th(downloadThread, saved, local);
 	th.detach();
-	//download(saved, local);
-	
-	
 }
 
 

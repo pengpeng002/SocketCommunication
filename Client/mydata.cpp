@@ -6,7 +6,7 @@
 #include "direct.h"
 
 char name[20]="null", pass[30]="null";
-CString g_savePath = "E:\\ClientDownload\\", g_tempSavePath;
+CString g_savePath = "E:\\ClientDownload\\";
 CString oldName, newName;
 CString oldPath;
 CString lastPath="\\\\";
@@ -261,7 +261,7 @@ void g_delete(CString &str)
 
 }
 
-void down(const CString name, const CString savePath, const SOCKET &Client)
+void g_download(const CString name, const CString savePath, const SOCKET &Client)
 {
 	int opt = DOWNLOAD;
 	int nameLen = name.GetLength();
@@ -278,40 +278,6 @@ void down(const CString name, const CString savePath, const SOCKET &Client)
 	}
 	printf("nameLen=%d, name=%s, fileLen=%lld, savePath=%s\n", nameLen, name.GetString(), fileLen, savePath.GetString());
 	FILE* fp = fopen(savePath.GetString(), "wb");//打开文件
-	long long saveLen = 0;
-	clock_t st = clock();
-	while (saveLen < fileLen)
-	{
-		int readLen = recv(Client, buffer, min(bufferSize, fileLen - saveLen), 0);
-		fwrite(buffer, readLen, 1, fp);
-		saveLen += readLen;
-		printf("\r%02.2lf %lld / %lld", saveLen * 100.0f / fileLen, saveLen, fileLen);
-	}
-	printf("\ndownload use time: %d\n", clock() - st);
-	printf("\nsave end\n");
-	fclose(fp);
-}
-
-void g_download(char* fi)
-{
-	
-	int opt = DOWNLOAD;
-	CString name = path + fi;
-	int nameLen = name.GetLength();
-	send(Client, (char*)&opt, 4, 0);//发送下载命令
-	send(Client, (char*)&nameLen, 4, 0);//发送路径长度
-	send(Client, name.GetBuffer(), nameLen, 0);//发送路径
-	CString savePath = g_tempSavePath + findFitName(fi);
-	long long fileLen = 0;
-	recv(Client, (char*)&fileLen, 8, 0);//收到文件长度
-	if (fileLen > INT_MAX || fileLen < 0)
-	{
-		fileLen = 0;
-		MessageBox(0, "文件最大限制为2GB", "error", 0);
-		//return;
-	}
-	printf("nameLen=%d, name=%s, fileLen=%lld, savePath=%s\n", nameLen, name.GetBuffer(), fileLen, savePath.GetBuffer());
-	FILE* fp = fopen(savePath.GetBuffer(), "wb");//打开文件
 	long long saveLen = 0;
 	clock_t st = clock();
 	while (saveLen < fileLen)
